@@ -1,11 +1,34 @@
-<script setup></script>
+<script setup>
+
+import { onMounted, nextTick } from 'vue';
+import { iniciarAnimaciones } from '@/assets/js/animations';
+import Navegacion from '@/components/layouts/Navegacion.vue';
+import Footer from '@/components/layouts/Footer.vue';
+
+
+onMounted(() => {
+
+  // import('@/assets/js/animations')
+
+  nextTick(() => {
+
+    iniciarAnimaciones()
+
+  })
+})
+
+
+
+</script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+
+   <Navegacion />
+
+  <RouterView />
+
+  <Footer />
+
 </template>
 
 <style scoped></style>
