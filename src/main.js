@@ -9,6 +9,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 import 'leaflet/dist/leaflet.css'
 
 
+
 const app = createApp(App)
 
 app.use(createPinia())

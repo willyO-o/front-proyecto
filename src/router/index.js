@@ -12,7 +12,13 @@ const router = createRouter({
       path: '/establecimiento/crear',
       name: 'CrearEstablecimiento',
       component: () => import('@/views/admin/Formulario.vue')
-    }
+    },
+    {
+      path: '/establecimiento/:id/editar',
+      name: 'EditarEstablecimiento',
+      component: () => import('@/views/admin/Formulario.vue')
+    },
+
 
   ],
 })

@@ -1,6 +1,6 @@
 <script setup>
 
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
 import L from 'leaflet';
 
@@ -11,6 +11,16 @@ const longitud = ref(-68.176485)
 
 const marker = ref(null)
 
+const props  = defineProps({
+    latitude: {
+        type: Number,
+        default: 0
+    },
+    longitude: {
+        type: Number,
+        default: 0
+    },
+})
 
 const emit = defineEmits(['obtener-coordenadas'])
 
@@ -64,6 +74,17 @@ const obtenerUbicacion = () => {
 
 }
 
+
+watch (() => [props.latitude, props.longitude], ([nuevoLatitude, nuevoLongitude]) =>{
+
+    latitud.value= nuevoLatitude 
+    longitud.value= nuevoLongitude
+
+    map.value.setView([ latitud.value, longitud.value])
+
+    marker.value.setLatLng([ latitud.value, longitud.value])
+
+})
 
 onMounted(() => {
     inicializarMapa()

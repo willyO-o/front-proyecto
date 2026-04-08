@@ -4,9 +4,11 @@ import { reactive, onMounted, ref } from 'vue';
 import { Form, Field, ErrorMessage } from 'vee-validate'
 import establecimientosValidationSchema from '@/schemas/establecimientosValidationSchema'
 
+import { useRoute } from 'vue-router'
+
 
 import { getCategorias } from '@/services/categoriaService'
-import { registrarEstablecimiento } from '@/services/establecimientoService'
+import { registrarEstablecimiento, listarEstablecimientoID, actualizarEstablecimiento } from '@/services/establecimientoService'
 
 import Mapa from '@/components/Mapa.vue';
 
@@ -15,6 +17,7 @@ import 'filepond/dist/filepond.min.css'
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css'
 import FileponPluginFileValidateType from 'filepond-plugin-file-validate-type'
 import FilepondPluginImagePreview from 'filepond-plugin-image-preview'
+import { notificacionToast , notificarError} from '@/utils/alertUtil'
 
 
 const filePond = VueFilePond(FileponPluginFileValidateType, FilepondPluginImagePreview)
@@ -24,21 +27,26 @@ const filePond = VueFilePond(FileponPluginFileValidateType, FilepondPluginImageP
 const categorias = ref([])
 const pond = ref(null)
 
+const urlImagen = ref('')
 const datos = reactive({
     nombre: '',
     descripcion: '',
     direccion: '',
-    imagen: 'imag/imagen.png',
+    imagen_file: '',
     telefono: '',
     email: '',
     website: '',
     horario_apertura: '',
     horario_cierre: '',
-    latitud: '',
-    longitud: '',
+    latitud: 0,
+    longitud: 0,
     estado: 'ACTIVO',
     categoria_id: 0,
 })
+
+
+const route = useRoute()
+
 
 
 
@@ -64,12 +72,12 @@ const agregarArchivo = (error, file) => {
         return
     }
 
-    datos.imagen = file.file
+    datos.imagen_file = file.file
 
 }
 
 const quitarArchivo = () => {
-    datos.imagen = null
+    datos.imagen_file = null
 }
 
 
@@ -77,35 +85,73 @@ const quitarArchivo = () => {
 const procesarFormulario = async () => {
 
     const formData = new FormData()
-    for (const key in datos){
-        formData.append(key,datos[key])
+    for (const key in datos) {
+        formData.append(key, datos[key])
 
     }
 
 
-
+    let resultado = null
     try {
 
+        if (route.params.id) {
+            //en caso de actualizacion
+            formData.append('_method','PUT')
+            resultado =  await actualizarEstablecimiento(formData, route.params.id)
+        } else {
+            //en caso de creacion
+           resultado = await registrarEstablecimiento(formData)
 
-        const resultado = await registrarEstablecimiento(formData)
+        }
 
 
+        notificacionToast(resultado.message)
 
 
-        console.log(resultado)
+        // console.log(resultado)
 
-    }catch (error){
+    } catch (error) {
 
-        console.warn("Error al registrar el establecimiento", error)
+        notificarError(error.response)
+        console.log(error.response)
 
     }
 
 }
 
+//edit formulario
+
+const obtenerEstablecimientoID = async () => {
+
+    const id = route.params.id
+
+    const resultado = await listarEstablecimientoID(id)
+
+
+    const establecimiento = resultado.data
+    console.log(resultado)
+
+    Object.keys(datos).forEach(key => {
+        if (establecimiento[key]) {
+            datos[key] = establecimiento[key]
+        }
+    })
+
+    urlImagen.value = establecimiento.url_imagen
+
+
+}
+
+
 
 onMounted(() => {
 
     listarCategorias()
+
+    if (route.params.id) {
+        obtenerEstablecimientoID()
+    }
+
 
 })
 
@@ -123,15 +169,12 @@ onMounted(() => {
                 <div class=" col-md-10">
                     <div class="auth-card anim scale-in">
                         <div class="auth-card-header">
-                            <h3><i class="fas fa-user-plus me-2"></i>Create Account</h3>
-                            <p>Join us today! Fill in the form below to get started.</p>
+                            <h3><i class="fas fa-building me-2"></i> {{ route.params.id ? 'Editar': 'Registrar' }} Establecimiento</h3>
+                            <p>los campos marcados con * son obligatorios.</p>
                         </div>
                         <div class="auth-card-body">
-                            <Form id="registerForm" 
-                            v-slot="{errors}"
-                            :validation-schema="establecimientosValidationSchema"
-                            @submit="procesarFormulario"
-                            >
+                            <Form id="registerForm" v-slot="{ errors }"
+                                 @submit="procesarFormulario">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label for="nombre" class="form-label">Nombre del Establecimiento *</label>
@@ -171,7 +214,8 @@ onMounted(() => {
                                     </div>
                                     <div class="col-md-12">
 
-                                        <Mapa @obtener-coordenadas="actualizarCoordenadas" />
+                                        <Mapa :latitude="datos.latitud" :longitude="datos.longitud"
+                                            @obtener-coordenadas="actualizarCoordenadas" />
 
                                         <Field type="hidden" name="latitud" v-model="datos.latitud" />
                                         <Field type="hidden" name="longitud" v-model="datos.longitud" />
@@ -248,7 +292,17 @@ onMounted(() => {
 
                                     </div>
 
-                                    <div class="col-md-12">
+
+
+
+                                </div>
+
+                                <div class="row">
+                                    <div v-if="urlImagen" class="col">
+                                        <img :src="urlImagen" alt="">
+                                    </div>
+
+                                    <div class="col">
                                         <file-pond name="imagen" ref="pond" height="200px"
                                             label-idle="Arrastra y suelta tu imagen o haz clic para seleccionar"
                                             :allow-multiple="false" max-file-size="2MB" @addfile="agregarArchivo"
@@ -258,12 +312,10 @@ onMounted(() => {
 
                                 </div>
 
-
                                 <div class="form-check mb-4">
                                     <Field class="form-check-input" type="checkbox" id="agreeTerms"
                                         name="terminos_condiciones" required :value="true"
-                                        :class="{'is-invalid': errors.terminos_condiciones}"
-                                        />
+                                        :class="{ 'is-invalid': errors.terminos_condiciones }" />
                                     <label class="form-check-label" for="agreeTerms">
                                         Acepto los <a href="#" class="forgot-link">Terminos y condiciones</a> y <a
                                             href="#" class="forgot-link">Politica de Privacidad</a>
