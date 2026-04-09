@@ -16,8 +16,8 @@ export const notificacionToast = (texto, tipo = 'success') => {
         toast: true,
         position: "top-end",
         showConfirmButton: false,
-        customClass:{
-            timerProgressBar: 'bg-'+ (tiposColores[tipo] || 'secondary')
+        customClass: {
+            timerProgressBar: 'bg-' + (tiposColores[tipo] || 'secondary')
         },
         timer: 5000,
         timerProgressBar: true,
@@ -26,7 +26,7 @@ export const notificacionToast = (texto, tipo = 'success') => {
             toast.onmouseleave = Swal.resumeTimer;
         }
     })
-    
+
     Toast.fire({
         icon: tipo,
         title: texto
@@ -34,32 +34,40 @@ export const notificacionToast = (texto, tipo = 'success') => {
 }
 
 
-export const notificarError = (errors)=>{
+export const notificarError = (errors) => {
 
     const errorCode = errors.status
 
-    if(errorCode == 422){
+    if (errorCode == 422) {
 
-        const errores  =  errors.data?.errors
+        const errores = errors.data?.errors
 
-        const mensajes = Object.values(errores).flat().map( mensaje => `<p class="text-danger mb-1">${mensaje}</p>`).join('')
+        let mensajes = '';
+
+        if (typeof errores === 'object') {
+            
+            mensajes = Object.values(errores).flat().map(mensaje => `<p class="text-danger mb-1">${mensaje}</p>`).join('')
+        
+        } else if (typeof errores === 'string') {
+            mensajes = `<p class="text-danger mb-1">${errores}</p>`
+        }
 
         Swal.fire({
             icon: 'error',
             title: '¡Error de Validación!',
-            html:mensajes
+            html: mensajes
         });
 
     }
-    
-    if(errorCode == 404){
+
+    if (errorCode == 404) {
         Swal.fire("¡Error!", "El recurso solicitado no fue encontrado", "error")
     }
-    if(errorCode == 500){
+    if (errorCode == 500) {
         Swal.fire("¡Error!", "Ocurrió un error interno del servidor", "error")
     }
 
 
-    
+
 
 }

@@ -4,7 +4,7 @@ import { reactive, onMounted, ref } from 'vue';
 import { Form, Field, ErrorMessage } from 'vee-validate'
 import establecimientosValidationSchema from '@/schemas/establecimientosValidationSchema'
 
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 
 import { getCategorias } from '@/services/categoriaService'
@@ -26,6 +26,7 @@ const filePond = VueFilePond(FileponPluginFileValidateType, FilepondPluginImageP
 
 const categorias = ref([])
 const pond = ref(null)
+const procesando= ref(false)
 
 const urlImagen = ref('')
 const datos = reactive({
@@ -46,7 +47,7 @@ const datos = reactive({
 
 
 const route = useRoute()
-
+const router = useRouter()
 
 
 
@@ -84,8 +85,12 @@ const quitarArchivo = () => {
 
 const procesarFormulario = async () => {
 
+    procesando.value = true
     const formData = new FormData()
     for (const key in datos) {
+        if(route.params.id && key =='imagen_file' && !datos.imagen_file){
+            continue
+        }
         formData.append(key, datos[key])
 
     }
@@ -97,6 +102,7 @@ const procesarFormulario = async () => {
         if (route.params.id) {
             //en caso de actualizacion
             formData.append('_method','PUT')
+
             resultado =  await actualizarEstablecimiento(formData, route.params.id)
         } else {
             //en caso de creacion
@@ -107,13 +113,15 @@ const procesarFormulario = async () => {
 
         notificacionToast(resultado.message)
 
-
-        // console.log(resultado)
+        setTimeout(() =>{
+            procesando.value = false
+            router.push({ name: 'DetalleEstablecimiento', params: { id:resultado.data.id}})
+        }, 1500)
 
     } catch (error) {
 
+        procesando.value = false
         notificarError(error.response)
-        console.log(error.response)
 
     }
 
@@ -129,7 +137,6 @@ const obtenerEstablecimientoID = async () => {
 
 
     const establecimiento = resultado.data
-    console.log(resultado)
 
     Object.keys(datos).forEach(key => {
         if (establecimiento[key]) {
@@ -174,6 +181,7 @@ onMounted(() => {
                         </div>
                         <div class="auth-card-body">
                             <Form id="registerForm" v-slot="{ errors }"
+                                :validation-schema="establecimientosValidationSchema"
                                  @submit="procesarFormulario">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
@@ -324,9 +332,9 @@ onMounted(() => {
                                     <ErrorMessage name="terminos_condiciones" class="text-danger small" />
 
                                 </div>
-                                <button type="submit" class=" btn-auth-submit w-100">
-                                    <i class="fas fa-save"></i>
-                                    Guardar
+                                <button type="submit" class=" btn-auth-submit w-100" :disabled="procesando">
+                                    <i class="" :class="{'fas  fa-spinner fa-spin': procesando, 'fas fa-save ': !procesando}" ></i>
+                                     {{ procesando ? 'Procesando...': 'Guardar'}}
                                 </button>
                             </Form>
 
