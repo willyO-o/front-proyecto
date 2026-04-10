@@ -8,3 +8,18 @@ export const getCategorias = async () => {
     return respuesta.data;
 
 }
+
+
+
+
+
+
+
+
+//categorias public
+
+export const getCategoriasPublic = async () => {
+    const respuesta = await api.get('/public/categorias')
+    return respuesta.data;
+
+}

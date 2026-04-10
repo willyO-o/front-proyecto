@@ -26,3 +26,14 @@ export const listarEstablecimientoID = async id => {
     return respuesta.data
 
 }
+
+
+/// establecimientos public
+
+
+export const getEstablecimientosPublic = async (parametros) => {
+
+    const respuesta = await api.get('/public/establecimientos',{params: parametros})
+
+    return respuesta.data
+}
