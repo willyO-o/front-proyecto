@@ -1,0 +1,23 @@
+/* .mi-icono {
+
+    height: 30px;
+    width: 30px;
+} */
+
+.pin-marcador{
+    width: 40px;
+    height: 40px;
+    border-radius: 50% 50% 50% 0;
+    background-color: #2A93EE;
+    transform: rotate(-45deg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pin-marcador i{
+
+    font-size: 17px;
+    color: white;
+    transform: rotate(45deg);
+}

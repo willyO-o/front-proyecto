@@ -13,11 +13,20 @@ const props = defineProps({
     establecimientos: {
         type: Array,
         required: true
+    },
+    coordenadas: {
+        type: Object,
+        required: false
     }
 })
 
 
+
+const grupoMarcadores = ref(null)
+
+
 const inicializarMapa = () => {
+
 
     if (map.value) {
         map.value.remove()
@@ -38,18 +47,57 @@ const agregarMarcadores = (listado) => {
 
     if (!map.value) return
 
-    // console.log("en marcadores",listado);
+    if (!grupoMarcadores.value) {
+        //verificamos si el grupo de marcadores ya esta inicializado
+        grupoMarcadores.value = L.layerGroup().addTo(map.value)
+    } else {
+        //si esta iniclizado, lo limpiamos para agregar los nuevos marcadores
+        grupoMarcadores.value.clearLayers()
+    }
 
     listado.forEach(item => {
 
-        L.marker([item.latitud, item.longitud]).addTo(map.value)
+        const myIcon = L.divIcon({
+            className: 'mi-icono',
+            iconSize: [30, 42],
+            iconAnchor: [15, 42],
+            html: /*html*/`
+                    <div style="backgroud-color: aqua; " class="pin-marcador" >
+                    <i class="${item.categoria.icono}" ></i>
+                    </div>
+                    `
+        });
+
+        const pupup = `
+            <b>${item.nombre}</b><br>
+            <span>${item.direccion}</span>
+    
+        `
+
+        //agregamos los marcadores al grupo de marcadores
+        L.marker([item.latitud, item.longitud], { icon: myIcon })
+            .addTo(grupoMarcadores.value)
+            .bindPopup(pupup)
 
     })
 }
 
-watch(() => props.establecimientos, (nuevoValor) =>{
+const enfocar = (coordenas) => {
+
+    if (!coordenas.lat || !coordenas.lng) return
+
+    map.value.flyTo([coordenas.lat, coordenas.lng], 16)
+}
+
+watch(() => props.establecimientos, (nuevoValor) => {
     agregarMarcadores(nuevoValor)
-},{immediate:true})
+
+}, { immediate: true })
+
+watch(() => props.coordenadas, (nuevasCoordenadas) => {
+
+    enfocar(nuevasCoordenadas)
+})
 
 
 onMounted(() => {
