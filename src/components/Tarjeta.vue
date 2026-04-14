@@ -27,13 +27,15 @@ const emits = defineEmits(['ver-en-mapa'])
                 </div>
                 <div class="card-body">
                     <div class="card-category cat-automotive">{{ establecimiento.categoria.nombre }}</div>
-                    <h5 class="card-title"><a href="#" class="text-decoration-none text-dark">{{ establecimiento.nombre
-                    }}</a></h5>
+                    <h5 class="card-title">
+                        <RouterLink :to="{ name: 'DetalleEstablecimiento', params: { id: establecimiento.id } }"
+                            class="text-decoration-none text-dark">{{ establecimiento.nombre }}</RouterLink>
+                    </h5>
                     <p class="card-address">
                         <i class="fas fa-map-marker-alt"></i>
                         {{ establecimiento.direccion }}
                     </p>
-                    <a @click="emits('ver-en-mapa', { lat: establecimiento.latitud, lng: establecimiento.longitud })"
+                    <a @click="emits('ver-en-mapa', { lat: establecimiento.latitud, lng: establecimiento.longitud, id: establecimiento.id })"
                         class="text-decoration-none text-primary" href="javascript:void(0)">
                         <i class="fas fa-map-marker-alt"></i>
                         Ver en el mapa
@@ -48,14 +50,16 @@ const emits = defineEmits(['ver-en-mapa'])
                 </div>
                 <div class="listing-list-content">
                     <div class="listing-list-category cat-automotive">{{ establecimiento.categoria.nombre }}</div>
-                    <h5 class="listing-list-title"><a href="#" class="text-decoration-none text-dark">{{
-                        establecimiento.nombre }}</a></h5>
+                    <h5 class="listing-list-title">
+                        <RouterLink :to="{ name: 'DetalleEstablecimiento', params: { id: establecimiento.id } }"
+                            class="text-decoration-none text-dark">{{ establecimiento.nombre }}</RouterLink>
+                    </h5>
                     <p class="listing-list-address">
                         {{ establecimiento.direccion }}
                         <span class="listing-list-phone"><i class="fas fa-phone-alt"></i> {{ establecimiento.telefono
-                        }}</span>
+                            }}</span>
                     </p>
-                    <a @click="emits('ver-en-mapa', { lat: establecimiento.latitud, lng: establecimiento.longitud })"
+                    <a @click="emits('ver-en-mapa', { lat: establecimiento.latitud, lng: establecimiento.longitud, id: establecimiento.id })"
                         class="text-decoration-none text-primary" href="javascript:void(0)">
                         <i class="fas fa-map-marker-alt"></i>
                         Ver en el mapa

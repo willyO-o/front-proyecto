@@ -9,6 +9,9 @@ const map = ref(null)
 const latitud = ref(-16.492204)
 const longitud = ref(-68.176485)
 
+
+const popupsMarcadores = ref({})
+
 const props = defineProps({
     establecimientos: {
         type: Array,
@@ -75,9 +78,11 @@ const agregarMarcadores = (listado) => {
         `
 
         //agregamos los marcadores al grupo de marcadores
-        L.marker([item.latitud, item.longitud], { icon: myIcon })
+        const marcador=L.marker([item.latitud, item.longitud], { icon: myIcon })
             .addTo(grupoMarcadores.value)
             .bindPopup(pupup)
+
+        popupsMarcadores.value[item.id] = marcador
 
     })
 }
@@ -87,6 +92,8 @@ const enfocar = (coordenas) => {
     if (!coordenas.lat || !coordenas.lng) return
 
     map.value.flyTo([coordenas.lat, coordenas.lng], 16)
+
+    popupsMarcadores.value[coordenas.id].openPopup()
 }
 
 watch(() => props.establecimientos, (nuevoValor) => {

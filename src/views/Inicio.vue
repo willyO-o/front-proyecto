@@ -67,6 +67,7 @@ const enfocarMapa=  (coord) =>{
 
     cordenadasEnfocar.value.lat = coord.lat
     cordenadasEnfocar.value.lng = coord.lng
+    cordenadasEnfocar.value.id = coord.id
 
     const mapa = document.getElementById('mapBanner')
     if(mapa){
@@ -167,8 +168,8 @@ onMounted(() => {
                             <option value="za">Z-A</option>
                         </select>
                         <div class="view-options btn-group">
-                            <a href="javascript:void()"  @click="esGrid = true" class="btn " :class="{'active':esGrid}" ><i class="fas fa-th"></i></a>
-                            <a href="javascript:void()"  @click="esGrid = false"  class="btn" :class="{'active':!esGrid}"><i class="fas fa-list"></i></a>
+                            <a href="javascript:void(0)"  @click="esGrid = true" class="btn " :class="{'active':esGrid}" ><i class="fas fa-th"></i></a>
+                            <a href="javascript:void(0)"  @click="esGrid = false"  class="btn" :class="{'active':!esGrid}"><i class="fas fa-list"></i></a>
                         </div>
                     </div>
                 </div>

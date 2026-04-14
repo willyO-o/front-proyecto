@@ -11,7 +11,7 @@ const longitud = ref(-68.176485)
 
 const marker = ref(null)
 
-const props  = defineProps({
+const props = defineProps({
     latitude: {
         type: Number,
         default: 0
@@ -20,6 +20,10 @@ const props  = defineProps({
         type: Number,
         default: 0
     },
+    isDraggable: {
+        type: Boolean,
+        default: true
+    }
 })
 
 const emit = defineEmits(['obtener-coordenadas'])
@@ -38,7 +42,7 @@ const inicializarMapa = () => {
     }).addTo(map.value);
 
     marker.value = L.marker([latitud.value, longitud.value], {
-        draggable: true
+        draggable: props.isDraggable
     }).addTo(map.value)
 
     marker.value.on('dragend', function (evento) {
@@ -49,6 +53,9 @@ const inicializarMapa = () => {
         // console.log(posision)
 
     })
+
+
+
 
 
 
@@ -75,14 +82,15 @@ const obtenerUbicacion = () => {
 }
 
 
-watch (() => [props.latitude, props.longitude], ([nuevoLatitude, nuevoLongitude]) =>{
+watch(() => [props.latitude, props.longitude], ([nuevoLatitude, nuevoLongitude]) => {
 
-    latitud.value= nuevoLatitude 
-    longitud.value= nuevoLongitude
+    latitud.value = nuevoLatitude
+    longitud.value = nuevoLongitude
+    map.value.invalidateSize()
 
-    map.value.setView([ latitud.value, longitud.value])
+    map.value.setView([latitud.value, longitud.value])
 
-    marker.value.setLatLng([ latitud.value, longitud.value])
+    marker.value.setLatLng([latitud.value, longitud.value])
 
 })
 

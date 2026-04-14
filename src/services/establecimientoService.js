@@ -33,7 +33,13 @@ export const listarEstablecimientoID = async id => {
 
 export const getEstablecimientosPublic = async (parametros) => {
 
-    const respuesta = await api.get('/public/establecimientos',{params: parametros})
+    const respuesta = await api.get('/public/establecimientos', { params: parametros })
+
+    return respuesta.data
+}
+
+export const getEstablecimientoPublicID = async id => {
+    const respuesta = await api.get('/public/establecimientos/' + id)
 
     return respuesta.data
 }
