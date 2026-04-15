@@ -16,4 +16,16 @@ import * as yup from 'yup'
     terminos_condiciones: yup.boolean().oneOf([true], 'Debe aceptar los términos y condiciones').required('Debe aceptar los términos y condiciones'),
 })
 
+export const serviciosValidationSchema = yup.object({
+    // establecimiento_id: yup.number().required('Selecc'),
+    nombre_servicio: yup.string().required('Por favor ingrese un nombre para el producto/servicio').min(3,'Alemnos 3 caraceres'),
+    descripcion_servicio: yup.string().required('Por favor ingrese una breve descripcion del producto/servicio').min(10,'Alemnos 10 caraceres'),
+    precio: yup.number().typeError('Ingrese un valor numérico para el precio').required('Por favor ingrese un precio').min(0, 'El precio no puede ser negativo'),
+    tipo: yup.string().required('seleccione un tipo').oneOf(['SERVICIO','PRODUCTO'], 'Seleccione un tipo válido'),
+    // icono: yup.string().required('Por favor seleccione un icono referencial'),
+    // disponible: yup.boolean(),
+
+})
+
+
 export default establecimientosValidationSchema

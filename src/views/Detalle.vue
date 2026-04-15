@@ -6,9 +6,34 @@ import { useRoute } from 'vue-router';
 import { getEstablecimientoPublicID } from '@/services/establecimientoService'
 import Mapa from '@/components/Mapa.vue';
 
+import { Modal } from 'bootstrap/dist/js/bootstrap.bundle.min.js';
+
+import { serviciosValidationSchema } from '@/schemas/establecimientosValidationSchema'
+import { Form, Field, ErrorMessage } from 'vee-validate';
+
+import IconPicker from '@/components/IconPicker.vue'
+
+import { registrarServicio, eliminarServicio } from '@/services/servicioService'
+
+import { notificacionToast, notificarError, confirmarAccion } from '@/utils/alertUtil'
+
 const establecimiento = ref({})
 
 const route = useRoute()
+
+const iconos = ref([])
+
+const modal = ref(null)
+
+const datosServicio = reactive({
+    establecimiento_id: '',
+    nombre_servicio: '',
+    descripcion_servicio: '',
+    precio: '',
+    tipo: 'SERVICIO',
+    icono: '',
+    disponible: '',
+})
 
 const cargarEstablecimiento = async () => {
 
@@ -25,7 +50,7 @@ const horaInstate = ref(null)
 const verificarHorario = computed(() => {
 
     if (!establecimiento.value.horario_cierre || !establecimiento.value.horario_cierre) return false
-    
+
     return (horaInstate.value >= establecimiento.value.horario_apertura && horaInstate.value <= establecimiento.value.horario_cierre);
 })
 
@@ -38,11 +63,99 @@ const intervaloHora = setInterval(() => {
     horaInstate.value = `${hora}:${minuto}`
 }, 2000) // Actualiza cada 5 minutos
 
+
+const mostrarFormulario = () => {
+
+
+    if (!modal.value) {
+        modal.value = new Modal(document.getElementById('modaServicios'))
+    }
+
+    modal.value.show()
+
+
+}
+
+
+const gardarServicio = async () => {
+
+    let resultado = null
+    datosServicio.establecimiento_id = route.params.id
+    try {
+
+        resultado = await registrarServicio(datosServicio)
+
+        establecimiento.value.servicios.push(resultado.data)
+
+        datosServicio.establecimiento_id = ''
+        datosServicio.nombre_servicio = ''
+        datosServicio.descripcion_servicio = ''
+        datosServicio.precio = ''
+        datosServicio.tipo = 'SERVICIO'
+        datosServicio.icono = ''
+        datosServicio.disponible = true
+
+        modal.value.hide()
+
+        notificacionToast(resultado.message)
+
+
+
+    } catch (error) {
+        console.error('Error al registrar el servicio:', error);
+        notificarError(error)
+    }
+
+}
+
+
+const cargarIconos = () => {
+
+    fetch('/fontawesome-icons.json')
+        .then(response => response.json())
+        .then(data => {
+            iconos.value = data
+        })
+        .catch(error => {
+            console.error('Error al cargar los iconos:', error);
+        })
+}
+
+const actualizarIcono = (nuevoIcono) => {
+
+    datosServicio.icono = nuevoIcono
+
+}
+
+
+const eliminar = async (idServicio) => {
+
+    const confirmacion = await confirmarAccion("¿Deseas eliminar este servicio?")
+
+    if (!confirmacion) return
+
+    try {
+        const resultado = await eliminarServicio(idServicio)
+
+        establecimiento.value.servicios = establecimiento.value.servicios.filter(item => item.id != idServicio)
+
+        notificacionToast(resultado.message)
+
+    } catch (error) {
+        console.error('Error al eliminar el servicio:', error);
+    }
+
+    console.log("resultado", confirmacion);
+
+
+}
+
 onMounted(() => {
     cargarEstablecimiento()
+    cargarIconos()
 })
 
-onBeforeUnmount(()=>{
+onBeforeUnmount(() => {
     clearInterval(intervaloHora)
 })
 
@@ -59,7 +172,7 @@ onBeforeUnmount(()=>{
                 <!-- Listing Header Card -->
                 <div class="detail-header-card anim scale-in">
                     <div class="detail-gallery">
-                        <img src="../assets/img/placeholder.png" alt="Ridenow Sports" class="detail-main-img">
+                        <img :src="establecimiento.url_imagen" alt="Ridenow Sports" class="detail-main-img">
                     </div>
                     <div class="detail-header-body">
                         <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
@@ -117,66 +230,32 @@ onBeforeUnmount(()=>{
                         Servicios/Productos
                     </h4>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+
+                        <div v-for="serv in establecimiento.servicios" :key="serv.id" class="col-md-6 mb-3">
                             <div class="service-card">
-                                <div class="service-icon"><i class="fas fa-motorcycle"></i></div>
+                                <i class=" fas fa-trash" @click="eliminar(serv.id)"></i>
+                                <div class="service-icon"><i :class="serv.icono"></i></div>
                                 <div class="service-info">
-                                    <h6>Motorcycle Sales</h6>
-                                    <p>Wide selection of new and pre-owned motorcycles from top brands.</p>
-                                    <span class="service-price">From $3,500</span>
+                                    <h6>{{ serv.nombre_servicio }}</h6>
+                                    <p>{{ serv.descripcion_servicio }}</p>
+                                    <span class="service-price">Bs. {{ serv.precio }}</span>
                                 </div>
                             </div>
                         </div>
+
+
                         <div class="col-md-6 mb-3">
-                            <div class="service-card">
-                                <div class="service-icon"><i class="fas fa-tools"></i></div>
-                                <div class="service-info">
-                                    <h6>Repair & Maintenance</h6>
-                                    <p>Professional service center with certified technicians for all makes.</p>
-                                    <span class="service-price">From $75/hr</span>
+                            <a href="javascript:void(0)" class="text-decoration-none " @click="mostrarFormulario">
+                                <div class="service-card d-flex align-items-center">
+                                    <div class="service-icon"><i class="fas fa-plus"></i></div>
+                                    <div class="service-info ">
+                                        <h6>Agregar Servicio / Producto</h6>
+                                    </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="service-card">
-                                <div class="service-icon"><i class="fas fa-hard-hat"></i></div>
-                                <div class="service-info">
-                                    <h6>Parts & Accessories</h6>
-                                    <p>Genuine OEM parts, helmets, jackets, gloves and riding gear.</p>
-                                    <span class="service-price">From $15</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="service-card">
-                                <div class="service-icon"><i class="fas fa-file-signature"></i></div>
-                                <div class="service-info">
-                                    <h6>Financing Options</h6>
-                                    <p>Flexible financing plans with competitive rates and easy approvals.</p>
-                                    <span class="service-price">0% APR Available</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="service-card">
-                                <div class="service-icon"><i class="fas fa-exchange-alt"></i></div>
-                                <div class="service-info">
-                                    <h6>Trade-In Program</h6>
-                                    <p>Get top dollar for your current vehicle with our trade-in evaluation.</p>
-                                    <span class="service-price">Free Appraisal</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="service-card">
-                                <div class="service-icon"><i class="fas fa-shipping-fast"></i></div>
-                                <div class="service-info">
-                                    <h6>Delivery Service</h6>
-                                    <p>Nationwide delivery available for all purchased vehicles.</p>
-                                    <span class="service-price">From $199</span>
-                                </div>
-                            </div>
-                        </div>
+
+
                     </div>
                 </div>
 
@@ -255,12 +334,18 @@ onBeforeUnmount(()=>{
                 <div class="detail-sidebar-card">
                     <h5 class="sidebar-card-title"><i class="fas fa-clock me-2"></i>Horarios de Atención</h5>
                     <ul class="business-hours">
-                        <li><span>Lunes</span><span>{{ establecimiento.horario_apertura }} AM - {{ establecimiento.horario_cierre }} PM</span></li>
-                        <li><span>Martes</span><span>{{ establecimiento.horario_apertura }} AM - {{ establecimiento.horario_cierre }} PM</span></li>
-                        <li><span>Miércoles</span><span>{{ establecimiento.horario_apertura }} AM - {{ establecimiento.horario_cierre }} PM</span></li>
-                        <li><span>Jueves</span><span>{{ establecimiento.horario_apertura }} AM - {{ establecimiento.horario_cierre }} PM</span></li>
-                        <li><span>Viernes</span><span>{{ establecimiento.horario_apertura }} AM - {{ establecimiento.horario_cierre }} PM</span></li>
-                        <li><span>Sábado</span><span>{{ establecimiento.horario_apertura }} AM - {{ establecimiento.horario_cierre }} PM</span></li>
+                        <li><span>Lunes</span><span>{{ establecimiento.horario_apertura }} AM - {{
+                            establecimiento.horario_cierre }} PM</span></li>
+                        <li><span>Martes</span><span>{{ establecimiento.horario_apertura }} AM - {{
+                            establecimiento.horario_cierre }} PM</span></li>
+                        <li><span>Miércoles</span><span>{{ establecimiento.horario_apertura }} AM - {{
+                            establecimiento.horario_cierre }} PM</span></li>
+                        <li><span>Jueves</span><span>{{ establecimiento.horario_apertura }} AM - {{
+                            establecimiento.horario_cierre }} PM</span></li>
+                        <li><span>Viernes</span><span>{{ establecimiento.horario_apertura }} AM - {{
+                            establecimiento.horario_cierre }} PM</span></li>
+                        <li><span>Sábado</span><span>{{ establecimiento.horario_apertura }} AM - {{
+                            establecimiento.horario_cierre }} PM</span></li>
                         <li class="closed"><span>Domingo</span><span>Cerrado</span></li>
                     </ul>
                 </div>
@@ -269,8 +354,9 @@ onBeforeUnmount(()=>{
                 <div class="detail-sidebar-card">
                     <h5 class="sidebar-card-title"><i class="fas fa-map-marked-alt me-2"></i>Location</h5>
                     <div class="sidebar-map">
-   
-                        <Mapa :latitude="establecimiento.latitud" :longitude="establecimiento.longitud" :isDraggable="false" />
+
+                        <Mapa :latitude="establecimiento.latitud" :longitude="establecimiento.longitud"
+                            :isDraggable="false" />
                     </div>
                 </div>
 
@@ -298,6 +384,102 @@ onBeforeUnmount(()=>{
                         <a href="#" class="share-btn share-pinterest"><i class="fab fa-pinterest-p"></i></a>
                     </div>
                 </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Button trigger modal -->
+    <!-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+        Launch static backdrop modal
+    </button> -->
+
+    <!-- Modal -->
+    <div class="modal fade" id="modaServicios" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="modaServiciosLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="modaServiciosLabel">Modal title</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <Form :validation-schema="serviciosValidationSchema" @submit="gardarServicio" id="registerForm">
+
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="nombre_servicio" class="form-label"> Servicio / Producto *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                                    <Field type="text" v-model="datosServicio.nombre_servicio" name="nombre_servicio"
+                                        class="form-control" id="nombre_servicio" placeholder="" required />
+                                </div>
+                                <ErrorMessage name="nombre_servicio" class="small text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="regLastName" class="form-label">Precio *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                    <Field type="number" v-model="datosServicio.precio" name="precio"
+                                        class="form-control" id="regLastName" step="0.01" required />
+                                </div>
+                                <ErrorMessage name="precio" class="small text-danger" />
+
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="tipo" class="form-label">Tipo *</label>
+                                <div class="input-group">
+                                    <Field as="select" class="form-select" id="tipo" name="tipo"
+                                        v-model="datosServicio.tipo" required>
+                                        <option value="SERVICIO">Servicio</option>
+                                        <option value="PRODUCTO"> Producto</option>
+                                    </Field>
+                                </div>
+                                <ErrorMessage name="tipo" class="small text-danger" />
+
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="descripcion_servicio" class="form-label">Descripción *</label>
+                            <div class="input-group">
+                                <Field as="textarea" class="form-control" id="descripcion_servicio"
+                                    v-model="datosServicio.descripcion_servicio" name="descripcion_servicio" required />
+                            </div>
+                            <ErrorMessage name="descripcion_servicio" class="small text-danger" />
+
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="">Estado:</label>
+
+                                <div class="form-check form-switch">
+                                    <Field class="form-check-input" type="checkbox" role="switch"
+                                        v-model="datosServicio.disponible" id="switchCheckDefault" :value="true"
+                                        name="disponible" />
+                                    <label class="form-check-label" for="switchCheckDefault">
+                                        Disponible / No Disponible
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <IconPicker :icons="iconos" :modelValue="datosServicio.icono"
+                                    @update:modelValue="actualizarIcono" />
+                            </div>
+
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save"> </i>
+                            Guardar
+                        </button>
+                    </div>
+                </Form>
 
             </div>
         </div>

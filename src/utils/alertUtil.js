@@ -45,9 +45,9 @@ export const notificarError = (errors) => {
         let mensajes = '';
 
         if (typeof errores === 'object') {
-            
+
             mensajes = Object.values(errores).flat().map(mensaje => `<p class="text-danger mb-1">${mensaje}</p>`).join('')
-        
+
         } else if (typeof errores === 'string') {
             mensajes = `<p class="text-danger mb-1">${errores}</p>`
         }
@@ -69,5 +69,21 @@ export const notificarError = (errors) => {
 
 
 
+
+}
+
+
+export const confirmarAccion = async (mensaje, txtBoton = 'Sí, eliminar') => {
+
+    const confirmacion = await Swal.fire({
+        title: "Estas Seguro?",
+        html: mensaje,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: txtBoton
+    })
+    return confirmacion.isConfirmed
 
 }
