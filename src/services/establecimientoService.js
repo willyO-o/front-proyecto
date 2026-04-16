@@ -1,6 +1,13 @@
 import api from "./api";
 
 
+export const getEstablecimientos = async (parametros) => {
+
+    const respuesta = await api.get('/establecimientos', { params: parametros })
+
+    return respuesta.data
+}
+
 export const registrarEstablecimiento = async (datos) => {
 
     const respuesta = await api.post('/establecimientos', datos)
@@ -25,6 +32,11 @@ export const listarEstablecimientoID = async id => {
 
     return respuesta.data
 
+}
+
+export const eliminarEstablecimiento = async id => {
+    const respuesta = await api.delete('/establecimientos/'+id)
+    return respuesta.data
 }
 
 

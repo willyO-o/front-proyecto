@@ -13,9 +13,11 @@ import { Form, Field, ErrorMessage } from 'vee-validate';
 
 import IconPicker from '@/components/IconPicker.vue'
 
-import { registrarServicio, eliminarServicio } from '@/services/servicioService'
+import { registrarServicio, eliminarServicio, actualizarServicio } from '@/services/servicioService'
 
 import { notificacionToast, notificarError, confirmarAccion } from '@/utils/alertUtil'
+
+import useUserStore from '@/stores/userStore';
 
 const establecimiento = ref({})
 
@@ -24,6 +26,8 @@ const route = useRoute()
 const iconos = ref([])
 
 const modal = ref(null)
+
+const userStore = useUserStore()
 
 const datosServicio = reactive({
     establecimiento_id: '',
@@ -35,12 +39,13 @@ const datosServicio = reactive({
     disponible: '',
 })
 
+const idServicioActualizar = ref(null)
+
 const cargarEstablecimiento = async () => {
 
     const resultado = await getEstablecimientoPublicID(route.params.id)
 
     establecimiento.value = resultado.data
-    console.log("establecimiento: ", establecimiento.value);
 
 
 }
@@ -66,6 +71,16 @@ const intervaloHora = setInterval(() => {
 
 const mostrarFormulario = () => {
 
+    Object.assign(datosServicio, {
+        establecimiento_id: '',
+        nombre_servicio: '',
+        descripcion_servicio: '',
+        precio: '',
+        tipo: 'SERVICIO',
+        icono: '',
+        disponible: '',
+    })
+    idServicioActualizar.value = null
 
     if (!modal.value) {
         modal.value = new Modal(document.getElementById('modaServicios'))
@@ -83,28 +98,37 @@ const gardarServicio = async () => {
     datosServicio.establecimiento_id = route.params.id
     try {
 
-        resultado = await registrarServicio(datosServicio)
+        if (idServicioActualizar.value) {
 
-        establecimiento.value.servicios.push(resultado.data)
+            resultado = await  actualizarServicio(datosServicio,idServicioActualizar.value )
+            const indice = establecimiento.value.servicios.findIndex(item => item.id == idServicioActualizar.value)
+            establecimiento.value.servicios[indice] = resultado.data
 
-        datosServicio.establecimiento_id = ''
-        datosServicio.nombre_servicio = ''
-        datosServicio.descripcion_servicio = ''
-        datosServicio.precio = ''
-        datosServicio.tipo = 'SERVICIO'
-        datosServicio.icono = ''
-        datosServicio.disponible = true
+        } else {
+            resultado = await registrarServicio(datosServicio)
+            establecimiento.value.servicios.push(resultado.data)
+        }
+
+        idServicioActualizar.value = null
+
+        Object.assign(datosServicio, {
+            establecimiento_id: '',
+            nombre_servicio: '',
+            descripcion_servicio: '',
+            precio: '',
+            tipo: 'SERVICIO',
+            icono: '',
+            disponible: '',
+        })
 
         modal.value.hide()
 
         notificacionToast(resultado.message)
 
-
-
     } catch (error) {
-        console.error('Error al registrar el servicio:', error);
         notificarError(error)
     }
+
 
 }
 
@@ -130,6 +154,8 @@ const actualizarIcono = (nuevoIcono) => {
 
 const eliminar = async (idServicio) => {
 
+
+
     const confirmacion = await confirmarAccion("¿Deseas eliminar este servicio?")
 
     if (!confirmacion) return
@@ -145,14 +171,26 @@ const eliminar = async (idServicio) => {
         console.error('Error al eliminar el servicio:', error);
     }
 
-    console.log("resultado", confirmacion);
 
 
 }
 
+const editar = (item) => {
+
+
+    mostrarFormulario()
+    Object.assign(datosServicio, item)
+    idServicioActualizar.value = item.id
+
+}
+
+
 onMounted(() => {
     cargarEstablecimiento()
     cargarIconos()
+
+    console.log(userStore.isLoggedIn);
+    
 })
 
 onBeforeUnmount(() => {
@@ -202,9 +240,9 @@ onBeforeUnmount(() => {
                         <div class="detail-contact-row">
                             <span><i class="fas fa-phone-alt"></i> (591) {{ establecimiento.telefono }}</span>
                             <span v-if="establecimiento.email"><i class="fas fa-envelope"></i> {{ establecimiento.email
-                                }}</span>
+                            }}</span>
                             <span v-if="establecimiento.website"><i class="fas fa-globe"></i> {{ establecimiento.website
-                                }}</span>
+                            }}</span>
                         </div>
                         <div class="detail-rating mt-2 d-none">
                             <i class="fas fa-star"></i>
@@ -233,7 +271,19 @@ onBeforeUnmount(() => {
 
                         <div v-for="serv in establecimiento.servicios" :key="serv.id" class="col-md-6 mb-3">
                             <div class="service-card">
-                                <i class=" fas fa-trash" @click="eliminar(serv.id)"></i>
+                                <span 
+                                     v-if="userStore.isLoggedIn"
+                                class=" position-absolute top-0 end-0 me-2 mt-2" >
+                                    <a href="javascript:void(0)" class="  text-muted me-2">
+                                        <i class=" fas fa-pencil" @click="editar(serv)"></i>
+
+                                    </a>
+                                    <a href="javascript:void(0)" class="  text-muted ">
+                                        <i class=" fas fa-trash" @click="eliminar(serv.id)"></i>
+
+                                    </a>
+                                </span>
+
                                 <div class="service-icon"><i :class="serv.icono"></i></div>
                                 <div class="service-info">
                                     <h6>{{ serv.nombre_servicio }}</h6>
@@ -244,7 +294,9 @@ onBeforeUnmount(() => {
                         </div>
 
 
-                        <div class="col-md-6 mb-3">
+                        <div 
+                        v-if="userStore.isLoggedIn"
+                        class="col-md-6 mb-3">
                             <a href="javascript:void(0)" class="text-decoration-none " @click="mostrarFormulario">
                                 <div class="service-card d-flex align-items-center">
                                     <div class="service-icon"><i class="fas fa-plus"></i></div>

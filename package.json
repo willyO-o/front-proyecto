@@ -12,6 +12,7 @@
     "@fortawesome/fontawesome-free": "^7.2.0",
     "@vueuse/core": "^14.2.1",
     "axios": "^1.14.0",
+    "axios-auth-refresh": "^5.0.2",
     "bootstrap": "^5.3.3",
     "filepond-plugin-file-validate-type": "^1.2.9",
     "filepond-plugin-image-preview": "^4.6.12",

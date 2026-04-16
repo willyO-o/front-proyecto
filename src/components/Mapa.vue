@@ -108,7 +108,7 @@ onMounted(() => {
     <!-- ==================== MAP BANNER ==================== -->
     <section class="map-banner" id="mapBanner">
 
-        <div id="map-canvas"></div>
+        <div id="map-canvas" :class="{'no-draggable': !props.isDraggable}"</div>
 
         <button class="map-fullscreen-btn" id="mapToggleBtn" title="Toggle Fullscreen Map">
             <i class="fas fa-expand"></i>
@@ -121,5 +121,8 @@ onMounted(() => {
 #map-canvas {
     width: 100%;
     min-height: 500px;
+}
+#map-canvas.no-draggable {
+    min-height: 200px;
 }
 </style>

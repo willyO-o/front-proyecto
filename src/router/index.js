@@ -40,6 +40,12 @@ const router = createRouter({
       name: 'Panel',
       component: () => import('@/views/admin/Panel.vue')
 
+    },
+    {
+      path: '/perfil',
+      name: 'Perfil',
+      component: () => import('@/views/admin/Panel.vue')
+
     }
 
 

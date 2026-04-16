@@ -21,12 +21,14 @@ const cordenadasEnfocar = ref({})
 const parametros = ref({
     busqueda: '',
     categoria_id: 0,
-    porPagina: 9,
+    porPagina: 1,
     pagina: 1,
     orden: '',
 
 })
 
+const lastPage = ref(0)
+const cargandoMas = ref(false)
 const cargando = ref(false)
 const totalResultados = ref(0)
 
@@ -41,6 +43,7 @@ const cargarCategorias = async () => {
 
 const cargarEstablecimientos = async () => {
 
+    parametros.value.pagina = 1
     cargando.value = true
     establecimientos.value = []
     const resultado = await getEstablecimientosPublic(parametros.value)
@@ -48,6 +51,7 @@ const cargarEstablecimientos = async () => {
 
     console.log(establecimientos.value)
     totalResultados.value = resultado.total
+    lastPage.value = resultado.last_page
     cargando.value = false
 }
 
@@ -61,7 +65,7 @@ const limpiarFiltros = () => {
     parametros.value.categoria_id = 0
 }
 
-const enfocarMapa=  (coord) =>{
+const enfocarMapa = (coord) => {
 
     cordenadasEnfocar.value = {}
 
@@ -70,10 +74,25 @@ const enfocarMapa=  (coord) =>{
     cordenadasEnfocar.value.id = coord.id
 
     const mapa = document.getElementById('mapBanner')
-    if(mapa){
-        mapa.scrollIntoView({ behavior: 'smooth' , block: 'center'})
+    if (mapa) {
+        mapa.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
-    
+
+}
+
+const cargarMasEstablecimientos = async () => {
+
+    cargandoMas.value = true
+
+    parametros.value.pagina++
+    const resultado = await getEstablecimientosPublic(parametros.value)
+
+    establecimientos.value = [...establecimientos.value, ...resultado.data]
+
+    cargandoMas.value = false
+
+
+
 }
 
 
@@ -94,7 +113,7 @@ onMounted(() => {
 <template>
 
 
-    <MapaBanner :establecimientos="establecimientos"  :coordenadas="cordenadasEnfocar" />
+    <MapaBanner :establecimientos="establecimientos" :coordenadas="cordenadasEnfocar" />
 
     <!-- ==================== RESERVATION / SEARCH SECTION ==================== -->
     <section class="reservation-section">
@@ -103,11 +122,13 @@ onMounted(() => {
             <div class="search-bar-wrapper anim fade-up anim-d2">
                 <select class="form-select" style="flex:1; min-width:160px;" v-model="parametros.categoria_id">
                     <option :value="0">Seleccionar categoría</option>
-                    <option v-for="itemCat in categorias" :value="itemCat.id"  :key="itemCat.id">{{ itemCat.nombre  }}</option>
-      
+                    <option v-for="itemCat in categorias" :value="itemCat.id" :key="itemCat.id">{{ itemCat.nombre }}
+                    </option>
+
                 </select>
                 <div class="input-with-icon">
-                    <input type="text" v-model="parametros.busqueda" class="form-control" placeholder="¿Qué estás buscando?">
+                    <input type="text" v-model="parametros.busqueda" class="form-control"
+                        placeholder="¿Qué estás buscando?">
                     <i class="fas fa-map-marker-alt icon-right"></i>
                 </div>
                 <select class="form-select d-none" style="flex:1; min-width:140px;">
@@ -125,7 +146,7 @@ onMounted(() => {
 
     <!-- ==================== LISTING HEADER ==================== -->
     <div class="listing-header">
-        <h3> Establecimientos   <span>[{{ totalResultados }}]</span></h3>
+        <h3> Establecimientos <span>[{{ totalResultados }}]</span></h3>
     </div>
 
     <!-- ==================== MAIN CONTENT ==================== -->
@@ -135,7 +156,8 @@ onMounted(() => {
             <div class="col-lg-3 mb-4 anim fade-left">
                 <!-- Results bar (above sidebar on mobile) -->
                 <div class="results-bar d-lg-none">
-                    <div class="result-count">Tu busqueda retorno <strong>{{ totalResultados }}</strong> resultados</div>
+                    <div class="result-count">Tu busqueda retorno <strong>{{ totalResultados }}</strong> resultados
+                    </div>
                 </div>
                 <ul class="sidebar-categories">
                     <li>
@@ -158,9 +180,10 @@ onMounted(() => {
             <div class="col-lg-9 anim fade-right anim-d2">
                 <!-- Results bar -->
                 <div class="results-bar d-none d-lg-flex">
-                    <div class="result-count">Tu busqueda retorno <strong>{{ totalResultados }}</strong> resultados</div>
+                    <div class="result-count">Tu busqueda retorno <strong>{{ totalResultados }}</strong> resultados
+                    </div>
                     <div class="d-flex align-items-center gap-2">
-                        <select class="sort-select" v-model="parametros.orden"  @change="cargarEstablecimientos" >
+                        <select class="sort-select" v-model="parametros.orden" @change="cargarEstablecimientos">
                             <option value="">Ordenar resultados por</option>
                             <option value="reciente">Recientes</option>
                             <option value="antiguo">Antiguos</option>
@@ -168,8 +191,10 @@ onMounted(() => {
                             <option value="za">Z-A</option>
                         </select>
                         <div class="view-options btn-group">
-                            <a href="javascript:void(0)"  @click="esGrid = true" class="btn " :class="{'active':esGrid}" ><i class="fas fa-th"></i></a>
-                            <a href="javascript:void(0)"  @click="esGrid = false"  class="btn" :class="{'active':!esGrid}"><i class="fas fa-list"></i></a>
+                            <a href="javascript:void(0)" @click="esGrid = true" class="btn "
+                                :class="{ 'active': esGrid }"><i class="fas fa-th"></i></a>
+                            <a href="javascript:void(0)" @click="esGrid = false" class="btn"
+                                :class="{ 'active': !esGrid }"><i class="fas fa-list"></i></a>
                         </div>
                     </div>
                 </div>
@@ -178,11 +203,8 @@ onMounted(() => {
                 <div class="row">
 
 
-                    <Tarjeta v-for="item in establecimientos" :key="item.id" 
-                    :establecimiento="item" 
-                     :grid="esGrid"
-                     @ver-en-mapa="enfocarMapa"
-                     />
+                    <Tarjeta v-for="item in establecimientos" :key="item.id" :establecimiento="item" :grid="esGrid"
+                        @ver-en-mapa="enfocarMapa" />
 
 
                     <div v-if="cargando && establecimientos.length == 0" class="text-center py-5">
@@ -193,9 +215,9 @@ onMounted(() => {
 
                     </div>
 
-                    <div v-if="establecimientos.length == 0  && !cargando" class="text-center py-5">
+                    <div v-if="establecimientos.length == 0 && !cargando" class="text-center py-5">
                         <h4>No se encontraron establecimientos</h4>
-                        
+
                     </div>
 
 
@@ -208,8 +230,12 @@ onMounted(() => {
 
 
                 <!-- LOAD MORE -->
-                <div class="text-center mt-3 mb-4">
-                    <button class="btn-load-more" id="loadMoreBtn">LOAD MORE</button>
+                <div @click="cargarMasEstablecimientos" v-if="parametros.pagina < lastPage"
+                    class="text-center mt-3 mb-4">
+                    <button class="btn-load-more" id="loadMoreBtn" :disabled="cargandoMas">
+                        <i class="fas fa-sync-alt fa-spin" v-if="cargandoMas"></i>
+                        {{ cargandoMas ? 'Cargando...' : 'Cargar más' }}
+                    </button>
                 </div>
             </div>
         </div>
