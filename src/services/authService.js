@@ -18,3 +18,9 @@ export const logout = async ()=>{
     const response = await api.post('/auth/logout')
     return response.data
 }
+
+export const cambiarContrasenia = async (datos) => {
+    const response = await api.post('/auth/cambiar-contrasenia', datos)
+    return response.data
+
+}

@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-// import { ref } from "vue";
+import { watch } from "vue";
 import { useStorage } from '@vueuse/core'
 import { computed } from "vue";
 
@@ -25,6 +25,13 @@ const useUserStore = defineStore('user', () => {
         accesToken.value = null
     }
 
+    watch([usuario, accesToken], ([newUsuario, newToken]) => {
+        if(!usuario.value || !accesToken.value){
+            localStorage.removeItem('usuario')
+            localStorage.removeItem('accesToken')
+            window.location.href = '/'
+        }
+    }, { deep: true })
     
 
 

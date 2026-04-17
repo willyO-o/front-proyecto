@@ -19,8 +19,18 @@ import FileponPluginFileValidateType from 'filepond-plugin-file-validate-type'
 import FilepondPluginImagePreview from 'filepond-plugin-image-preview'
 import { notificacionToast , notificarError} from '@/utils/alertUtil'
 
+import Chatbot from '@/components/ChatBot.vue'
+
 
 const filePond = VueFilePond(FileponPluginFileValidateType, FilepondPluginImagePreview)
+
+
+const camposCompletar = ref({
+    nombre: 'texto',
+    descripcion: 'texto',   
+    horario_apertura: 'HH:mm',
+    horario_cierre: 'HH:mm',
+})
 
 
 
@@ -45,6 +55,16 @@ const datos = reactive({
     categoria_id: 0,
 })
 
+
+const recibirCampos = (campos) => {
+
+    Object.keys(campos).forEach(key => {
+        if(datos[key] !== undefined){
+            datos[key] = campos[key]
+        }
+    })
+
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -347,5 +367,7 @@ onMounted(() => {
         </div>
     </section>
 
+
+    <Chatbot :campos="camposCompletar" @respuestaChatbot="recibirCampos" />
 
 </template>
